@@ -89,11 +89,12 @@ services:
   fornecedores-service:
     build: ./fornecedores-service
     container_name: fornecedores-service
+    restart: on-failure
     depends_on:
       - eureka-server
       - config-server
     environment:
-      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     ports:

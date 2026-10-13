@@ -4,7 +4,9 @@ import com.example.suppliersservice.dto.ProductDto;
 import com.example.suppliersservice.model.Supplier;
 import com.example.suppliersservice.service.SupplierService;
 import jakarta.validation.Valid;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -29,6 +31,12 @@ public class SupplierController {
     @PostMapping
     public ResponseEntity<Supplier> create(@Valid @RequestBody Supplier supplier) {
         return ResponseEntity.status(HttpStatus.CREATED).body(service.create(supplier));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDuplicateCnpj(DataIntegrityViolationException exception) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT,
+                "A supplier with this CNPJ already exists.");
     }
 
     @GetMapping("/produtos")

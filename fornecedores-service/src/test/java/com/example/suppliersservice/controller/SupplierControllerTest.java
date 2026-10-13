@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import java.math.BigDecimal;
@@ -57,6 +58,15 @@ class SupplierControllerTest {
                 .andExpect(status().isCreated()).andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.nome").value("Northstar Supplies"))
                 .andExpect(jsonPath("$.cnpj").value("12345678000199"));
+    }
+
+    @Test void returnsConflictForDuplicateCnpj() throws Exception {
+        when(service.create(any(Supplier.class)))
+                .thenThrow(new DataIntegrityViolationException("Duplicate CNPJ"));
+        mvc.perform(post("/fornecedores").contentType(MediaType.APPLICATION_JSON)
+                .content("{\"nome\":\"Northstar Supplies\",\"cnpj\":\"12345678000199\"}"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.detail").value("A supplier with this CNPJ already exists."));
     }
 
     @Test void rejectsBlankName() throws Exception {
