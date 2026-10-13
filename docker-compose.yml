@@ -85,6 +85,22 @@ services:
     networks:
       - microservicos-net
 
+  # --- Supplier service ---
+  fornecedores-service:
+    build: ./fornecedores-service
+    container_name: fornecedores-service
+    depends_on:
+      - eureka-server
+      - config-server
+    environment:
+      - SPRING_CONFIG_IMPORT=optional:configserver:http://config-server:8888
+      - SPRING_PROFILES_ACTIVE=docker
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
+    ports:
+      - "8084:8084"
+    networks:
+      - microservicos-net
+
   # --- Servico de cadastro de usuarios ---
   auth-service:
     build: ./auth-service
@@ -99,7 +115,7 @@ services:
       - SPRING_PROFILES_ACTIVE=docker
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://eureka-server:8761/eureka/
     ports:
-      - "8084:8084"
+      - "8086:8086"
     networks:
       - microservicos-net
 

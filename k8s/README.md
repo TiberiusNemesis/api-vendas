@@ -15,7 +15,7 @@ kind create cluster --name ecommerce
 ## 3. Buildar e carregar as imagens
 
 ```bash
-for s in eureka-server config-server produtos-service vendas-service clientes-service auth-service gateway; do
+for s in eureka-server config-server produtos-service vendas-service clientes-service fornecedores-service auth-service gateway; do
   docker build -t $s:1.0 ./$s
   kind load docker-image $s:1.0 --name ecommerce
 done
@@ -101,5 +101,4 @@ kubectl rollout restart deployment/produtos-service -n ecommerce
 ```bash
 kind delete cluster --name ecommerce
 ```
-
 
