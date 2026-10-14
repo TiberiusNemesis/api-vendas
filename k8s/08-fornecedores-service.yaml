@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fornecedores-service
+  namespace: ecommerce
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fornecedores-service
+  template:
+    metadata:
+      labels:
+        app: fornecedores-service
+    spec:
+      # Wait for discovery and configuration before starting the application.
+      initContainers:
+        - name: wait-eureka
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z eureka-server 8761; do sleep 2; done']
+        - name: wait-config-server
+          image: busybox:1.36
+          command: ['sh', '-c', 'until nc -z config-server 8888; do sleep 2; done']
+      containers:
+        - name: fornecedores-service
+          image: fornecedores-service:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8084
+          env:
+            - name: SPRING_CONFIG_IMPORT
+              value: "optional:configserver:http://config-server:8888"
+            - name: SPRING_PROFILES_ACTIVE
+              value: "docker"
+            # Keep the listening port explicit if optional configuration fails.
+            - name: SERVER_PORT
+              value: "8084"
+            # JSON preserves the case-sensitive Eureka defaultZone map key.
+            - name: SPRING_APPLICATION_JSON
+              value: '{"eureka":{"client":{"serviceUrl":{"defaultZone":"http://eureka-server:8761/eureka/"}}}}'
+            # Register the routable Pod IP instead of its hostname.
+            - name: EUREKA_INSTANCE_PREFER_IP_ADDRESS
+              value: "true"
+            - name: EUREKA_INSTANCE_IP_ADDRESS
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+          readinessProbe:
+            tcpSocket: { port: 8084 }
+            initialDelaySeconds: 20
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fornecedores-service
+  namespace: ecommerce
+spec:
+  selector:
+    app: fornecedores-service
+  ports:
+    - port: 8084
+      targetPort: 8084
